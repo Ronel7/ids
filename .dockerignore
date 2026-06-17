@@ -1,0 +1,31 @@
+# Environnements virtuels — NE JAMAIS inclure dans l'image Docker
+venv/
+.venv/
+env/
+
+# Cache Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Fichiers de données volumineux (pas nécessaires en prod)
+*.arff
+*.pcap
+*.pcapng
+*.csv
+
+# Fichiers système
+.DS_Store
+.env
+
+# Git
+.git/
+.gitignore
+
+# Scripts annexes non utilisés par app.py
+extractor.py
+
+# Documentation
+README.md
+*.ipynb

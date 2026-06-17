@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IDS — Détection d'Intrusions</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0f1117;
+      --card:    #1a1d2e;
+      --border:  #2d3148;
+      --acc:     #6366f1;
+      --grn:     #22c55e;
+      --red:     #ef4444;
+      --amb:     #f59e0b;
+      --txt:     #e2e8f0;
+      --muted:   #64748b;
+      --radius:  10px;
+    }
+
+    body { background: var(--bg); color: var(--txt); font-family: system-ui, sans-serif;
+           min-height: 100vh; padding: 2rem 1rem; }
+
+    .container { max-width: 1100px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .header { text-align: center; margin-bottom: 2.5rem; }
+    .header h1 { font-size: 2rem; font-weight: 700; margin-bottom: .5rem; }
+    .header h1 span { color: var(--acc); }
+    .header p  { color: var(--muted); font-size: .95rem; }
+
+    /* ── Upload zone ── */
+    .upload-zone {
+      border: 2px dashed var(--border); border-radius: var(--radius);
+      padding: 3rem 2rem; text-align: center; cursor: pointer;
+      transition: border-color .2s, background .2s;
+      background: var(--card); margin-bottom: 2rem;
+    }
+    .upload-zone:hover, .upload-zone.drag { border-color: var(--acc); background: #1e2035; }
+    .upload-zone .icon { font-size: 3rem; margin-bottom: 1rem; }
+    .upload-zone h2 { font-size: 1.1rem; margin-bottom: .5rem; }
+    .upload-zone p  { color: var(--muted); font-size: .875rem; }
+    .upload-zone input { display: none; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 22px; border-radius: 8px; font-size: .9rem;
+      font-weight: 500; cursor: pointer; border: none; transition: opacity .15s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn-primary { background: var(--acc); color: #fff; margin-top: 1rem; }
+    .btn-outline { background: transparent; color: var(--txt);
+                   border: 1px solid var(--border); }
+
+    /* ── Stats cards ── */
+    .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px;
+             margin-bottom: 2rem; }
+    .stat-card { background: var(--card); border: .5px solid var(--border);
+                 border-radius: var(--radius); padding: 1.25rem; text-align: center; }
+    .stat-card .val { font-size: 2.2rem; font-weight: 700; line-height: 1; margin-bottom: .3rem; }
+    .stat-card .lbl { font-size: .8rem; color: var(--muted); text-transform: uppercase;
+                      letter-spacing: .05em; }
+    .stat-card.ok     .val { color: var(--grn); }
+    .stat-card.alert  .val { color: #f97316; }
+    .stat-card.warn   .val { color: var(--red); }
+    .stat-card.info   .val { color: var(--acc); }
+
+    /* ── Barre de progression ── */
+    .progress-wrap { background: var(--card); border: .5px solid var(--border);
+                     border-radius: var(--radius); padding: 1.5rem;
+                     margin-bottom: 2rem; display: none; }
+    .progress-wrap h3 { margin-bottom: 1rem; font-size: .95rem; }
+    .progress-bar { background: var(--border); border-radius: 99px; height: 8px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 99px;
+                     background: linear-gradient(90deg, var(--acc), #818cf8);
+                     transition: width .3s ease; width: 0%; }
+    .progress-text { color: var(--muted); font-size: .8rem; margin-top: .5rem; }
+
+    /* ── Table ── */
+    .table-wrap { background: var(--card); border: .5px solid var(--border);
+                  border-radius: var(--radius); overflow: hidden; display: none; }
+    .table-header { padding: 1rem 1.5rem; border-bottom: .5px solid var(--border);
+                    display: flex; align-items: center; justify-content: space-between; }
+    .table-header h3 { font-size: 1rem; }
+    .filter-btns { display: flex; gap: 6px; }
+    .filter-btn { padding: 5px 14px; border-radius: 6px; font-size: .8rem;
+                  cursor: pointer; border: .5px solid var(--border);
+                  background: transparent; color: var(--muted); transition: all .15s; }
+    .filter-btn.active { background: var(--acc); color: #fff; border-color: var(--acc); }
+
+    table { width: 100%; border-collapse: collapse; }
+    th { padding: 10px 14px; text-align: left; font-size: .75rem; color: var(--muted);
+         text-transform: uppercase; letter-spacing: .05em;
+         border-bottom: .5px solid var(--border); background: #141725; }
+    td { padding: 10px 14px; font-size: .85rem;
+         border-bottom: .5px solid #1e2235; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #1e2235; }
+
+    .badge { display: inline-flex; align-items: center; gap: 4px;
+             padding: 3px 10px; border-radius: 99px; font-size: .75rem; font-weight: 500; }
+    .badge-ok       { background: #22c55e18; color: var(--grn); }
+    .badge-medium   { background: #f59e0b18; color: var(--amb); }
+    .badge-high     { background: #f9731628; color: #f97316; }
+    .badge-critical { background: #ef4444; color: #fff; }
+
+    .mono { font-family: monospace; font-size: .8rem; color: var(--muted); }
+
+    /* ── Hidden ── */
+    .hidden { display: none !important; }
+
+    /* ── Responsive ── */
+    @media (max-width: 700px) {
+      .stats { grid-template-columns: repeat(2,1fr); }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>🛡️ <span>IDS</span> — Détection d'Intrusions</h1>
+    <p>Charge un fichier .pcap — le système extrait les 41 features et prédit chaque connexion</p>
+  </div>
+
+  <!-- Upload -->
+  <div class="upload-zone" id="dropZone"
+       ondragover="ev(event,'drag')" ondragleave="ev(event,'')" ondrop="drop(event)">
+    <div class="icon">📁</div>
+    <h2>Glisse ton fichier .pcap ici</h2>
+    <p>ou clique pour le sélectionner depuis ton ordinateur</p>
+    <input type="file" id="fileInput" accept=".pcap" onchange="handleFile(this.files[0])">
+    <br>
+    <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+      Choisir un fichier .pcap
+    </button>
+  </div>
+
+  <!-- Progression -->
+  <div class="progress-wrap" id="progressWrap">
+    <h3 id="progressLabel">Analyse en cours...</h3>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">Chargement du fichier...</div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats hidden" id="statsRow">
+    <div class="stat-card info">
+      <div class="val" id="statTotal">0</div>
+      <div class="lbl">Connexions analysées</div>
+    </div>
+    <div class="stat-card ok">
+      <div class="val" id="statNormal">0</div>
+      <div class="lbl">Connexions normales</div>
+    </div>
+    <div class="stat-card alert">
+      <div class="val" id="statAnomalies">0</div>
+      <div class="lbl">Anomalies détectées</div>
+    </div>
+    <div class="stat-card warn">
+      <div class="val" id="statCritical">0</div>
+      <div class="lbl">Alertes critiques</div>
+    </div>
+  </div>
+
+  <!-- Tableau -->
+  <div class="table-wrap" id="tableWrap">
+    <div class="table-header">
+      <h3>Résultats par connexion</h3>
+      <div class="filter-btns">
+        <button class="filter-btn active" onclick="filterTable('ALL',this)">Tout</button>
+        <button class="filter-btn" onclick="filterTable('ANOMALIE',this)">Anomalies</button>
+        <button class="filter-btn" onclick="filterTable('NORMALE',this)">Normales</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Source</th>
+            <th>Destination</th>
+            <th>Service</th>
+            <th>Flag</th>
+            <th>src_bytes</th>
+            <th>dst_bytes</th>
+            <th>Prédiction</th>
+            <th>Confiance</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let allRows = [];
+
+/* ── Drag & drop ── */
+function ev(e, cls) {
+  e.preventDefault();
+  document.getElementById('dropZone').className = 'upload-zone ' + cls;
+}
+function drop(e) {
+  e.preventDefault();
+  document.getElementById('dropZone').className = 'upload-zone';
+  const f = e.dataTransfer.files[0];
+  if (f) handleFile(f);
+}
+
+/* ── Upload & analyse ── */
+function handleFile(file) {
+  if (!file || !file.name.endsWith('.pcap')) {
+    alert('Fichier .pcap requis');
+    return;
+  }
+
+  // Afficher la barre de progression
+  const pw = document.getElementById('progressWrap');
+  pw.style.display = 'block';
+  document.getElementById('statsRow').classList.add('hidden');
+  document.getElementById('tableWrap').style.display = 'none';
+
+  // Simulation de progression
+  let pct = 0;
+  const steps = [
+    [10, 'Lecture des paquets réseau...'],
+    [30, 'Reconstitution des connexions TCP...'],
+    [55, 'Extraction des 41 features...'],
+    [80, 'Application du modèle Random Forest...'],
+    [95, 'Génération des résultats...'],
+  ];
+  let si = 0;
+  const interval = setInterval(() => {
+    if (si < steps.length) {
+      pct = steps[si][0];
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('progressText').textContent = steps[si][1];
+      si++;
+    }
+  }, 400);
+
+  const fd = new FormData();
+  fd.append('file', file);
+
+  fetch('/analyze', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      clearInterval(interval);
+      document.getElementById('progressFill').style.width = '100%';
+      document.getElementById('progressText').textContent = 'Analyse terminée ✓';
+      setTimeout(() => {
+        pw.style.display = 'none';
+        showResults(data);
+      }, 500);
+    })
+    .catch(err => {
+      clearInterval(interval);
+      pw.style.display = 'none';
+      alert('Erreur : ' + err.message);
+    });
+}
+
+/* ── Affichage résultats ── */
+function showResults(data) {
+  if (data.error) { alert('Erreur : ' + data.error); return; }
+
+  document.getElementById('statTotal').textContent     = data.total;
+  document.getElementById('statNormal').textContent    = data.normal;
+  document.getElementById('statAnomalies').textContent = data.anomalies;
+  document.getElementById('statCritical').textContent  = data.critical;
+  document.getElementById('statsRow').classList.remove('hidden');
+
+  allRows = data.connections;
+  renderTable(allRows);
+  document.getElementById('tableWrap').style.display = 'block';
+}
+
+function badgeClass(level) {
+  return { OK:'badge-ok', MEDIUM:'badge-medium', HIGH:'badge-high', CRITICAL:'badge-critical' }[level] || 'badge-ok';
+}
+
+function renderTable(rows) {
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = rows.map(r => `
+    <tr data-pred="${r.prediction}">
+      <td class="mono">${r.id}</td>
+      <td class="mono">${r.src_ip}</td>
+      <td class="mono">${r.dst_ip}:${r.dst_port}</td>
+      <td><span style="color:#a5b4fc">${r.service}</span></td>
+      <td class="mono">${r.flag}</td>
+      <td class="mono">${r.src_bytes}</td>
+      <td class="mono">${r.dst_bytes}</td>
+      <td><span class="badge ${badgeClass(r.alert_level)}">
+        ${r.prediction === 'ANOMALIE' ? '🚨' : '✅'} ${r.prediction}
+      </span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;background:#2d3148;border-radius:99px;height:6px;overflow:hidden">
+            <div style="width:${r.confidence}%;height:100%;border-radius:99px;
+              background:${r.alert_level==='OK'?'#22c55e':r.alert_level==='CRITICAL'?'#ef4444':r.alert_level==='HIGH'?'#f97316':'#f59e0b'}">
+            </div>
+          </div>
+          <span class="mono">${r.confidence}%</span>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function filterTable(pred, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = pred === 'ALL' ? allRows : allRows.filter(r => r.prediction === pred);
+  renderTable(filtered);
+}
+</script>
+</body>
+</html>
