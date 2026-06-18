@@ -19,4 +19,4 @@ COPY . .
 EXPOSE 5000
 
 # Démarrage de l'API
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-5000}
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-5000} --timeout 120 app:app"]
