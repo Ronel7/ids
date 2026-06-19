@@ -1,9 +1,7 @@
 """
-═══════════════════════════════════════════════════════════════
   IDS App — Application de détection d'intrusions
   Pour l'utilisateur lambda : upload pcap → prédiction immédiate
   Stack : Flask + joblib + scapy
-═══════════════════════════════════════════════════════════════
 """
 
 import os, re, json, time, threading
@@ -14,9 +12,9 @@ import pandas as pd
 import numpy as np
 import joblib
 
-# ─────────────────────────────────────────────────────────────
+
 # Chargement du modèle
-# ─────────────────────────────────────────────────────────────
+
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "model.pkl")
 bundle     = joblib.load(MODEL_PATH)
@@ -28,9 +26,9 @@ FEATURES   = bundle["features"]
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max
 
-# ─────────────────────────────────────────────────────────────
+
 # PORT → SERVICE (NSL-KDD)
-# ─────────────────────────────────────────────────────────────
+
 PORT_SERVICE = {
     20:'ftp_data',21:'ftp',22:'ssh',23:'telnet',25:'smtp',
     53:'domain',79:'finger',80:'http',110:'pop_3',111:'sunrpc',
@@ -55,9 +53,8 @@ def deduce_flag(flags_seq, has_data_fwd, has_data_bwd):
     if has_syn and has_sa and not has_fin: return 'S1'
     return 'OTH'
 
-# ─────────────────────────────────────────────────────────────
 # Extraction des features depuis pcap
-# ─────────────────────────────────────────────────────────────
+
 def extract_features_from_pcap(pcap_path):
     try:
         from scapy.all import rdpcap, IP, TCP, Raw
@@ -233,5 +230,6 @@ def analyze():
             os.remove(tmp_path)
 
 if __name__ == '__main__':
-    print("IDS App → http://localhost:5000")
-    app.run(debug=False, host='0.0.0.0', port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    print(f"IDS App démarré sur le port {port}")
+    app.run(debug=False, host='0.0.0.0', port=port)
