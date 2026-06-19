@@ -25,7 +25,7 @@ ids_app/
 ## Lancer en local
 
 ```bash
-# 1. Créer un environnement virtuel (recommandé)
+# 1. Créer un environnement virtuel 
 python -m venv venv
 venv\Scripts\activate          # Windows
 source venv/bin/activate       # Mac/Linux
@@ -40,46 +40,11 @@ python app.py
 http://localhost:5000
 ```
 
----
-
-## Déploiement sur GitHub
-
-### Étape 1 — Initialiser le dépôt Git
-
-Dans le dossier du projet (celui qui contient `app.py`, pas le dossier `venv`) :
-
-```bash
-git init
-git add .
-git commit -m "Initial commit — IDS App"
-```
-
-> Le fichier `.gitignore` empêche le dossier `venv/` et les fichiers `.pcap`/`.arff`
-> d'être envoyés sur GitHub — c'est normal et voulu, ces fichiers sont trop volumineux
-> et inutiles pour le déploiement.
-
-### Étape 2 — Créer le dépôt sur GitHub
-
-1. Va sur [github.com/new](https://github.com/new)
-2. Donne un nom au dépôt (ex: `ids-detection-app`)
-3. Ne coche **aucune** case (pas de README, pas de .gitignore — tu les as déjà)
-4. Clique **Create repository**
-
-### Étape 3 — Pousser le code
-
-GitHub te donne des commandes après création, généralement :
-
-```bash
-git remote add origin https://github.com/TON_USERNAME/ids-detection-app.git
-git branch -M main
-git push -u origin main
-```
-
----
-
 
 ## Modèle
-
+```
 - **Algorithme** : Random Forest
 - **Dataset d'entraînement** : NSL-KDD
 - **Features** : 41 (extraites automatiquement depuis le `.pcap` par `app.py`)
+
+```
