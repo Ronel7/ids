@@ -43,8 +43,8 @@ http://localhost:5000
 
 ## Modèle
 ```
-- **Algorithme** : Random Forest
-- **Dataset d'entraînement** : NSL-KDD
-- **Features** : 41 (extraites automatiquement depuis le `.pcap` par `app.py`)
+- Algorithme : Random Forest
+- Dataset d'entraînement : NSL-KDD
+- Features : 41 (extraites automatiquement depuis le `.pcap` par `app.py`)
 
 ```
