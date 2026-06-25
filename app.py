@@ -230,6 +230,6 @@ def analyze():
             os.remove(tmp_path)
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 7860))
+    port = int(os.environ.get("PORT", 5000))
     print(f"IDS App démarré sur le port {port}")
     app.run(debug=False, host='0.0.0.0', port=port)
